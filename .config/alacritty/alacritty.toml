@@ -1,0 +1,11 @@
+[general]
+import = ["~/.config/alacritty/colors.toml"]
+
+[window]
+opacity = 1.0
+padding.x = 10
+padding.y = 10
+
+[font]
+normal = { family = "IosevkaTerm NFM", style = "Regular" }
+size = 12

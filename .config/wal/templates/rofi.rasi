@@ -1,0 +1,162 @@
+configuration {{
+    show-icons: false;
+
+    display-drun: "";
+}}
+
+* {{
+    font: "Xanh Mono Italic 15";
+    active-background: {color4};
+    active-foreground: {color15};
+    normal-background: {background};
+    normal-foreground: {foreground};
+    urgent-background: {color1};
+    urgent-foreground: {color15};
+    alternate-active-background: {background};
+    alternate-active-foreground: {foreground};
+    alternate-normal-background: {background};
+    alternate-normal-foreground: {foreground};
+    alternate-urgent-background: {background};
+    alternate-urgent-foreground: {foreground};
+    selected-active-background: {color12};
+    selected-active-foreground: {color0};
+    selected-normal-background: {color2};
+    selected-normal-foreground: {color15};
+    selected-urgent-background: {color9};
+    selected-urgent-foreground: {color0};
+    background-color: {background};
+    background: {background};
+    foreground: {foreground};
+    border-color: {color8};
+    spacing: 2;
+}}
+
+window {{
+    background-color: {background};
+    border: 0;
+    padding: 0;
+}}
+
+mainbox {{
+    border: 0;
+    padding: 12px 14px;
+}}
+
+message {{
+    border: 2px 0px 0px;
+    border-color: {color8};
+    padding: 1px;
+}}
+
+textbox {{
+    text-color: {foreground};
+}}
+
+inputbar {{
+    children: [ prompt, textbox-prompt-colon, entry, case-indicator ];
+    spacing: 0;
+    text-color: {foreground};
+    padding: 1px;
+}}
+
+textbox-prompt-colon {{
+    expand: false;
+    str: ":";
+    margin: 0px 0.3em 0em 0em;
+    text-color: {foreground};
+}}
+
+listview {{
+    fixed-height: 0;
+    border: 2px 0px 0px;
+    border-color: {color8};
+    spacing: 2px;
+    scrollbar: true;
+    padding: 2px 0px 0px;
+}}
+
+element {{
+    border: 0;
+    padding: 1px;
+}}
+
+element normal.normal {{
+    background-color: {background};
+    text-color: {foreground};
+}}
+
+element normal.urgent {{
+    background-color: {color1};
+    text-color: {color15};
+}}
+
+element normal.active {{
+    background-color: {color4};
+    text-color: {color15};
+}}
+
+element selected.normal {{
+    background-color: {color2};
+    text-color: {color15};
+}}
+
+element selected.urgent {{
+    background-color: {color9};
+    text-color: {color0};
+}}
+
+element selected.active {{
+    background-color: {color12};
+    text-color: {color0};
+}}
+
+element alternate.normal {{
+    background-color: {background};
+    text-color: {foreground};
+}}
+
+element alternate.urgent {{
+    background-color: {color1};
+    text-color: {color15};
+}}
+
+element alternate.active {{
+    background-color: {color4};
+    text-color: {color15};
+}}
+
+scrollbar {{
+    width: 4px;
+    border: 0;
+    handle-width: 8px;
+    padding: 0;
+}}
+
+sidebar {{
+    border: 2px 0px 0px;
+    border-color: {color8};
+}}
+
+button {{
+    text-color: {foreground};
+}}
+
+button selected {{
+    background-color: {color2};
+    text-color: {color15};
+}}
+
+case-indicator {{
+    spacing: 0;
+    text-color: {foreground};
+}}
+
+entry {{
+    spacing: 0;
+    text-color: {foreground};
+}}
+
+prompt {{
+    spacing: 0;
+    text-color: {foreground};
+}}

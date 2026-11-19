@@ -1,0 +1,51 @@
+# layout and style
+bottom_bar          : false
+height              : 19
+vertical_padding    : 0
+horizontal_padding  : 400
+text_padding        : 0
+border              : true
+border_width        : 4
+font                : gallant12x22
+font_size           : 14
+
+# modules
+module.0.name       : volume
+module.0.cmd        : amixer get Master | grep -o '[0-9]*%' | head -1 || echo 'N/A'
+module.0.enabled    : true
+module.0.interval   : 5
+
+module.1.name       : cpu
+module.1.cmd        : top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/' | awk '{print 100-$1"%"}'
+module.1.enabled    : false
+module.1.interval   : 3
+
+module.2.name       : mem
+module.2.cmd        : free -h | awk '/^Mem/ { print $3 }' | sed s/i//g
+module.2.enabled    : true
+module.2.interval   : 3
+
+module.3.name       : clock
+module.3.cmd        : date '+%H:%M:%S'
+module.3.enabled    : true
+module.3.interval   : 1
+
+module.4.name       : date
+module.4.cmd        : date '+%Y-%m-%d'
+module.4.enabled    : true
+module.4.interval   : 60
+
+workspaces.labels              : %dev% @web 3 4 5 6 7 8 9
+workspaces.padding_left        : 10
+workspaces.padding_right       : 10
+workspaces.spacing             : 0
+workspaces.position            : left
+
+# colors
+background_colour                : #09212F
+foreground_colour                : #e2dcd2
+border_colour                    : #000000
+workspaces.active_background     : #2997D6
+workspaces.active_foreground     : #09212F
+workspaces.inactive_background   : #09212F
+workspaces.inactive_foreground   : #e2dcd2

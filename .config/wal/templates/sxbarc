@@ -1,0 +1,7 @@
+background_colour                : {background}
+foreground_colour                : {foreground}
+border_colour                    : {color4}
+workspaces.active_background     : {color4}
+workspaces.active_foreground     : {background}
+workspaces.inactive_background   : {background}
+workspaces.inactive_foreground   : {foreground}

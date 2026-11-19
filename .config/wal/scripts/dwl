@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cp "$HOME/.cache/wal/dwl.h" \
+   "$HOME/src/dwl/dwl-colors.h"

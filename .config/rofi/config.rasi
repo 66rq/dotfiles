@@ -1,0 +1,162 @@
+configuration {
+    show-icons: false;
+
+    display-drun: "";
+}
+
+* {
+    font: "Xanh Mono Italic 15";
+    active-background: #ABABA1;
+    active-foreground: #e2dcd2;
+    normal-background: #09212F;
+    normal-foreground: #e2dcd2;
+    urgent-background: #687B83;
+    urgent-foreground: #e2dcd2;
+    alternate-active-background: #09212F;
+    alternate-active-foreground: #e2dcd2;
+    alternate-normal-background: #09212F;
+    alternate-normal-foreground: #e2dcd2;
+    alternate-urgent-background: #09212F;
+    alternate-urgent-foreground: #e2dcd2;
+    selected-active-background: #ABABA1;
+    selected-active-foreground: #09212F;
+    selected-normal-background: #708E8E;
+    selected-normal-foreground: #e2dcd2;
+    selected-urgent-background: #687B83;
+    selected-urgent-foreground: #09212F;
+    background-color: #09212F;
+    background: #09212F;
+    foreground: #e2dcd2;
+    border-color: #9e9a93;
+    spacing: 2;
+}
+
+window {
+    background-color: #09212F;
+    border: 0;
+    padding: 0;
+}
+
+mainbox {
+    border: 0;
+    padding: 12px 14px;
+}
+
+message {
+    border: 2px 0px 0px;
+    border-color: #9e9a93;
+    padding: 1px;
+}
+
+textbox {
+    text-color: #e2dcd2;
+}
+
+inputbar {
+    children: [ prompt, textbox-prompt-colon, entry, case-indicator ];
+    spacing: 0;
+    text-color: #e2dcd2;
+    padding: 1px;
+}
+
+textbox-prompt-colon {
+    expand: false;
+    str: ":";
+    margin: 0px 0.3em 0em 0em;
+    text-color: #e2dcd2;
+}
+
+listview {
+    fixed-height: 0;
+    border: 2px 0px 0px;
+    border-color: #9e9a93;
+    spacing: 2px;
+    scrollbar: true;
+    padding: 2px 0px 0px;
+}
+
+element {
+    border: 0;
+    padding: 1px;
+}
+
+element normal.normal {
+    background-color: #09212F;
+    text-color: #e2dcd2;
+}
+
+element normal.urgent {
+    background-color: #687B83;
+    text-color: #e2dcd2;
+}
+
+element normal.active {
+    background-color: #ABABA1;
+    text-color: #e2dcd2;
+}
+
+element selected.normal {
+    background-color: #708E8E;
+    text-color: #e2dcd2;
+}
+
+element selected.urgent {
+    background-color: #687B83;
+    text-color: #09212F;
+}
+
+element selected.active {
+    background-color: #ABABA1;
+    text-color: #09212F;
+}
+
+element alternate.normal {
+    background-color: #09212F;
+    text-color: #e2dcd2;
+}
+
+element alternate.urgent {
+    background-color: #687B83;
+    text-color: #e2dcd2;
+}
+
+element alternate.active {
+    background-color: #ABABA1;
+    text-color: #e2dcd2;
+}
+
+scrollbar {
+    width: 4px;
+    border: 0;
+    handle-width: 8px;
+    padding: 0;
+}
+
+sidebar {
+    border: 2px 0px 0px;
+    border-color: #9e9a93;
+}
+
+button {
+    text-color: #e2dcd2;
+}
+
+button selected {
+    background-color: #708E8E;
+    text-color: #e2dcd2;
+}
+
+case-indicator {
+    spacing: 0;
+    text-color: #e2dcd2;
+}
+
+entry {
+    spacing: 0;
+    text-color: #e2dcd2;
+}
+
+prompt {
+    spacing: 0;
+    text-color: #e2dcd2;
+}

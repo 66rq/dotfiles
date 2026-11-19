@@ -1,0 +1,33 @@
+*foreground:        #e2dcd2
+*background:        #09212F
+
+*color0:  #09212F
+*color1:  #687B83
+*color2:  #708E8E
+*color3:  #8F918E
+*color4:  #ABABA1
+*color5:  #C5BBAB
+*color6:  #BBC2BE
+*color7:  #e2dcd2
+*color8:  #9e9a93
+*color9:  #687B83
+*color10: #708E8E
+*color11: #8F918E
+*color12: #ABABA1
+*color13: #C5BBAB
+*color14: #BBC2BE
+*color15: #e2dcd2
+
+XClock*foreground: #e2dcd2
+XClock*background: #09212F
+XClock*majorColor:  #e2dcd2
+XClock*minorColor:  #e2dcd2
+XClock*hourColor:   #e2dcd2
+XClock*minuteColor: #e2dcd2
+XClock*secondColor: #e2dcd2
+
+xeyes*foreground: #e2dcd2
+xeyes*background: #09212F
+
+XLogo*foreground: #e2dcd2
+XLogo*background: #09212F

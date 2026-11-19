@@ -1,0 +1,19 @@
+backend = "xrender";
+vsync = true;
+use-damage = true;
+
+animations = (
+    # Select ONE profile only. Custom is included in rules below.
+    # @include "modules/profiles/fade.conf"
+    # @include "modules/profiles/slide.conf"
+    @include "modules/profiles/pop.conf"
+    # @include "modules/profiles/fly.conf"
+    # @include "modules/profiles/appear.conf"
+    @include "modules/Addons/workspace.conf"
+);
+
+rules = (
+    @include "modules/Addons/opacity.conf"
+    @include "modules/Addons/window.conf"
+    # @include "modules/profiles/custom.conf"
+);

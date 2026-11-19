@@ -1,0 +1,3 @@
+focused_border_colour    : {color4}
+unfocused_border_colour  : {color8}
+pinned_border_colour     : {color3}
