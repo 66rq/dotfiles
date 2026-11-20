@@ -1,0 +1,129 @@
+@import "colors.css";
+
+* {
+    font-family: "Go Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-size: 15px;
+    min-height: 0;
+    border: none;
+    box-shadow: none;
+    text-shadow: none;
+}
+
+window#waybar {
+    background: transparent;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    border: none;
+    color: @text;
+}
+
+#workspaces {
+    margin: 4px 8px;
+    padding: 2px 4px;
+    background: @surface;
+    border: 1px solid @border;
+    border-radius: 10px;
+}
+
+#workspaces button {
+    min-width: 20px;
+    min-height: 26px;
+    padding: 0 9px;
+    margin: 0 2px;
+    color: @muted;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    transition: background-color 150ms ease;
+}
+
+#workspaces button.active {
+    color: @accent-text;
+    background: @accent;
+}
+
+#workspaces button:hover {
+    color: @text;
+    background: @hover;
+}
+
+#workspaces button.active:hover {
+    color: @accent-text;
+    background: @accent;
+}
+
+#workspaces button.urgent {
+    color: @urgent-text;
+    background: @urgent;
+}
+
+#workspaces button.hidden {
+    color: @muted;
+    background: transparent;
+}
+
+#custom-window-title {
+    min-height: 28px;
+    margin: 4px 8px;
+    padding: 0 18px;
+    color: @text;
+    background: @surface;
+    border: 1px solid @border;
+    border-radius: 10px;
+}
+
+#custom-window-title.empty {
+    background: transparent;
+    border-color: transparent;
+}
+
+#custom-media {
+    min-height: 28px;
+    margin: 4px 5px;
+    padding: 0 12px;
+    color: @text;
+    background: @surface;
+    border: 1px solid @border;
+    border-radius: 10px;
+}
+
+#custom-media.playing {
+    color: @accent;
+}
+
+#custom-media.paused,
+#custom-media.stopped {
+    color: @muted;
+}
+
+#custom-media.empty {
+    background: transparent;
+    border-color: transparent;
+}
+
+#tray {
+    min-height: 28px;
+    margin: 4px 5px;
+    padding: 0 9px;
+    color: @text;
+    background: @surface;
+    border: 1px solid @border;
+    border-radius: 10px;
+}
+
+#tray > .needs-attention {
+    background: @urgent;
+    border-radius: 6px;
+}
+
+#clock {
+    min-height: 28px;
+    margin: 4px 8px;
+    padding: 0 13px;
+    color: @accent;
+    background: @surface;
+    border: 1px solid @border;
+    border-radius: 10px;
+}

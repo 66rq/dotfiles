@@ -1,0 +1,35 @@
+@define-color foreground #e2dcd2;
+@define-color background #09212F;
+@define-color cursor #e2dcd2;
+
+@define-color color0 #09212F;
+@define-color color1 #687B83;
+@define-color color2 #708E8E;
+@define-color color3 #8F918E;
+@define-color color4 #ABABA1;
+@define-color color5 #C5BBAB;
+@define-color color6 #BBC2BE;
+@define-color color7 #e2dcd2;
+@define-color color8 #9e9a93;
+@define-color color9 #687B83;
+@define-color color10 #708E8E;
+@define-color color11 #8F918E;
+@define-color color12 #ABABA1;
+@define-color color13 #C5BBAB;
+@define-color color14 #BBC2BE;
+@define-color color15 #e2dcd2;
+
+@define-color bar-bg transparent;
+@define-color surface @color0;
+@define-color hover @color8;
+
+@define-color text @foreground;
+@define-color muted @color8;
+
+@define-color accent @color4;
+@define-color accent-text @background;
+
+@define-color border @color8;
+
+@define-color urgent @color1;
+@define-color urgent-text @foreground;

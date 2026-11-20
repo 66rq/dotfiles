@@ -1,0 +1,65 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 40,
+    "spacing": 0,
+
+    "modules-left": [
+        "ext/workspaces"
+    ],
+
+    "modules-center": [
+        "custom/window-title"
+    ],
+
+    "modules-right": [
+        "custom/media",
+        "tray",
+        "clock"
+    ],
+
+    "ext/workspaces": {
+        "format": "{name}",
+        "sort-by-id": true,
+        "ignore-hidden": false,
+        "active-only": false,
+        "on-click": "activate"
+    },
+
+    "custom/window-title": {
+        "exec": "/home/mahmoud/.config/waybar/scripts/window-title-watch.py",
+        "return-type": "json",
+        "format": "{text}",
+        "max-length": 70,
+        "align": 0.5,
+        "escape": true,
+        "hide-empty-text": true,
+        "tooltip": false,
+        "restart-interval": 1
+    },
+
+    "custom/media": {
+        "exec": "/home/mahmoud/.config/waybar/scripts/waybar-media.py",
+        "return-type": "json",
+        "format": "{text}",
+        "interval": 2,
+        "max-length": 42,
+        "escape": true,
+        "hide-empty-text": true,
+        "tooltip": true,
+        "on-click": "/home/mahmoud/.config/waybar/scripts/media-control.py toggle",
+        "on-click-right": "/home/mahmoud/.config/waybar/scripts/media-control.py right"
+    },
+
+    "tray": {
+        "icon-size": 18,
+        "spacing": 8,
+        "show-passive-items": true,
+        "tooltip": false
+    },
+
+    "clock": {
+        "format": "{:%a %d %b  %H:%M}",
+        "tooltip": false
+    }
+}
