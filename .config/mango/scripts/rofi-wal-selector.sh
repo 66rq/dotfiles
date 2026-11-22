@@ -44,5 +44,6 @@ cp -- "$IMAGE" "$CACHED_IMAGE" || exit 1
 wal -c || exit 1
 
 awww img "$CACHED_IMAGE" || exit 1
-
 wal -n -i "$CACHED_IMAGE" -o "$HOME/.config/wal/run-scripts.sh"
+pkill waybar
+waybar
