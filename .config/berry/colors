@@ -1,0 +1,19 @@
+#!/bin/sh
+
+BERRY_FOCUS_COLOR="C0BCC2"
+BERRY_UNFOCUS_COLOR="121616"
+
+BERRY_INNER_FOCUS_COLOR="C0BCC2"
+BERRY_INNER_UNFOCUS_COLOR="121616"
+
+BERRY_TEXT_FOCUS_COLOR="dbdde0"
+BERRY_TEXT_UNFOCUS_COLOR="999a9c"
+
+berryc focus_color "$BERRY_FOCUS_COLOR"
+berryc unfocus_color "$BERRY_UNFOCUS_COLOR"
+
+berryc inner_focus_color "$BERRY_INNER_FOCUS_COLOR"
+berryc inner_unfocus_color "$BERRY_INNER_UNFOCUS_COLOR"
+
+berryc text_focus_color "$BERRY_TEXT_FOCUS_COLOR"
+berryc text_unfocus_color "$BERRY_TEXT_UNFOCUS_COLOR"

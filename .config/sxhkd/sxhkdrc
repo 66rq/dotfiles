@@ -1,0 +1,41 @@
+super + Escape
+	pkill -10 -x sxhkd
+
+super + Return
+	st -G 905x563
+
+super + d
+	dmenu_run -fn "Xanh Mono:size=14"
+
+super + q
+	berryc window_close
+
+super + f
+	berryc fullscreen
+
+super + shift + m
+	berryc window_monocle
+
+super + shift + d
+	berryc window_center
+
+alt + Tab
+	berryc cycle_focus
+
+super + shift + {Left,Right,Up,Down}
+	berryc window_move {-40 0, 40 0, 0 -40, 0 40}
+
+super + {h,j,k,l}
+	berryc window_resize {-30 0, 0 30, 0 -30, 30 0}
+
+super + alt + {h,j,k,l}
+	berryc {snap_left,snap_bottom,snap_top,snap_right}
+
+super + {1-9}
+	berryc switch_workspace {0-8}
+
+super + shift + {1-9}
+	berryc send_to_workspace {0-8}
+
+super + shift + e
+	berryc quit
