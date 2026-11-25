@@ -34,14 +34,25 @@ static void unmanage(Havel *z, Window w) {
     int i;
     for (i = 0; i < z->nclients; i++) if (z->clients[i].window == w) break;
     if (i == z->nclients) return;
-    Window parent = z->clients[i].transient_for;
-    z->clients[i] = z->clients[--z->nclients];
+
+    Client *c = &z->clients[i];
+    Window parent = c->transient_for;
+
+    XUngrabButton(z->dpy, Button1, AnyModifier, w);
+    XUngrabButton(z->dpy, Button3, AnyModifier, w);
+    if (c->damage) XDamageDestroy(z->dpy, c->damage);
+
+    int last = --z->nclients;
+    z->clients[i] = z->clients[last];
+    memset(&z->clients[last], 0, sizeof z->clients[last]);
+
     if (z->move_win == w || z->resize_win == w) {
         z->moving = z->resizing = 0; z->move_win = z->resize_win = 0;
         XUngrabPointer(z->dpy, CurrentTime);
         z->mod_grab = 0; sync_gesture_grab(z);
     }
-    if (z->hover_win == w)  z->hover_win = 0;
+    if (z->hover_win == w) z->hover_win = 0;
+
     if (z->focused == w) {
         Client *back = parent ? find(z, parent) : NULL;
         z->focused = 0;
@@ -55,6 +66,7 @@ static void unmanage(Havel *z, Window w) {
                 }
             }
         }
-        if (z->focused) XSetInputFocus(z->dpy, z->focused, RevertToPointerRoot, CurrentTime);
+        XSetInputFocus(z->dpy, z->focused ? z->focused : z->root,
+                       RevertToPointerRoot, CurrentTime);
     }
 }

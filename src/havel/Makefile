@@ -18,7 +18,7 @@ clean:
 
 install: havel
 	install -d $(BINDIR)
-	install -m755 havel rhwm $(BINDIR)
+	install -m755 havel $(BINDIR)
 	install -d $(XSESSIONSDIR)
 	install -m644 havel.desktop $(XSESSIONSDIR)/havel.desktop
 
@@ -26,5 +26,5 @@ reload: install
 	@pkill -USR1 -x havel || true
 
 uninstall:
-	rm -f $(BINDIR)/havel $(BINDIR)/rhwm
+	rm -f $(BINDIR)/havel
 	rm -f $(XSESSIONSDIR)/havel.desktop

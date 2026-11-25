@@ -59,8 +59,10 @@ static void zoom_out(Havel *, const Arg *);
 
 typedef struct {
     Window window;
+    Visual *visual;
+    Damage damage;
     double cx, cy;
-    int cw, ch, depth;
+    int cw, ch;
     int restored; /* placement came from a saved _Havel_CANVAS_GEOM, not from a fresh guess */
     Window transient_for;   /* WM_TRANSIENT_FOR: the window this dialog belongs to, else None */
     int isfullscreen;
@@ -83,10 +85,10 @@ struct Havel {
     uint32_t  present_serial;
     int       sw, sh;
     Viewport  vp;
-    XRenderPictFormat *fmt32, *fmt24;
     Client    clients[MAX_CLIENTS];
     int       nclients;
     Window    overrides[MAX_CLIENTS];
+    Damage    override_damage[MAX_CLIENTS];
     int       noverride;
     Window    focused;
     int       damage_event;
@@ -114,9 +116,10 @@ struct Havel {
 static int g_other_wm;
 static Client *focus_raise(Havel *, Client *);
 static void sync_gesture_grab(Havel *);
+static void cleanup(Havel *);
 
-/* Havel: one translation unit, split into ordered implementation fragments. */
-/* Edit config.h; config.def.h is the shipped default template. */
+/* Havel: one translation unit, split into ordered implementation fragments.
+ * Edit config.h and reload with `make reload`. */
 
 #include "modules/state.h"
 #include "modules/canvas.h"

@@ -10,9 +10,11 @@ alias p9='vfetch -d plan9'
 alias minecraft='java -jar $HOME/Apps/SKlauncher-3.2.18.jar'
 alias ll='ls -la'
 alias i='doas xbps-install -S'
+alias u='doas xbps-install -Syu'
 alias q='doas xbps-query -Rs'
 alias r='doas xbps-remove'
 alias fp='fuzzypkg'
+alias x='startx'
 
 set -o vi
 export EDITOR=vim

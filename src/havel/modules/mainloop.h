@@ -62,7 +62,10 @@ int main(int argc, char **argv) {
         XSelectInput(z.dpy, z.root, SubstructureRedirectMask|SubstructureNotifyMask|PropertyChangeMask);
         XSync(z.dpy, False);
         if (!g_other_wm) break;
-        if (!g_saved.valid || try >= 40) { fputs("havel: another window manager is already running\n", stderr); return 1; }
+        if (!g_saved.valid || try >= 40) {
+            fputs("havel: another window manager is already running\n", stderr);
+            cleanup(&z); XCloseDisplay(z.dpy); return 1;
+        }
         usleep(50000);
     }
 
@@ -71,16 +74,16 @@ int main(int argc, char **argv) {
     sigaction(SIGUSR1, &sa, NULL);
 
     int eb, ee;
-    if (!XCompositeQueryExtension(z.dpy, &eb, &ee)) { fputs("havel: no XComposite\n", stderr); return 1; }
-    if (!XDamageQueryExtension(z.dpy, &z.damage_event, &ee)) { fputs("havel: no XDamage\n", stderr); return 1; }
-    if (!XRenderQueryExtension(z.dpy, &eb, &ee))    { fputs("havel: no XRender\n",    stderr); return 1; }
-    if (!XFixesQueryExtension(z.dpy, &eb, &ee))     { fputs("havel: no XFixes\n",     stderr); return 1; }
+    if (!XCompositeQueryExtension(z.dpy, &eb, &ee)) { fputs("havel: no XComposite\n", stderr); cleanup(&z); XCloseDisplay(z.dpy); return 1; }
+    if (!XDamageQueryExtension(z.dpy, &z.damage_event, &ee)) { fputs("havel: no XDamage\n", stderr); cleanup(&z); XCloseDisplay(z.dpy); return 1; }
+    if (!XRenderQueryExtension(z.dpy, &eb, &ee))    { fputs("havel: no XRender\n",    stderr); cleanup(&z); XCloseDisplay(z.dpy); return 1; }
+    if (!XFixesQueryExtension(z.dpy, &eb, &ee))     { fputs("havel: no XFixes\n",     stderr); cleanup(&z); XCloseDisplay(z.dpy); return 1; }
     if (!XQueryExtension(z.dpy, "XInputExtension", &z.xi_opcode, &eb, &ee)) {
-        fputs("havel: no XInput2\n", stderr); return 1;
+        fputs("havel: no XInput2\n", stderr); cleanup(&z); XCloseDisplay(z.dpy); return 1;
     }
     { int maj = 2, min = 2; XIQueryVersion(z.dpy, &maj, &min); }
     if (!XPresentQueryExtension(z.dpy, &z.present_opcode, &eb, &ee)) {
-        fputs("havel: no XPresent\n", stderr); return 1;
+        fputs("havel: no XPresent\n", stderr); cleanup(&z); XCloseDisplay(z.dpy); return 1;
     }
 
     z.wm_protocols = XInternAtom(z.dpy, "WM_PROTOCOLS", False);
@@ -112,11 +115,17 @@ int main(int argc, char **argv) {
     XISetMask(ximask, XI_RawMotion);
     XISetMask(ximask, XI_RawKeyPress);
     XISetMask(ximask, XI_RawKeyRelease);
+    XISetMask(ximask, XI_RawButtonPress);
+    XISetMask(ximask, XI_RawButtonRelease);
     XIEventMask evmask = { XIAllMasterDevices, sizeof(ximask), ximask };
     XISelectEvents(z.dpy, z.root, &evmask, 1);
 
     XCompositeRedirectSubwindows(z.dpy, z.root, CompositeRedirectAutomatic);
     z.overlay = XCompositeGetOverlayWindow(z.dpy, z.root);
+    if (z.overlay == None) {
+        fputs("havel: cannot acquire composite overlay window\n", stderr);
+        cleanup(&z); XCloseDisplay(z.dpy); return 1;
+    }
     XSelectInput(z.dpy, z.overlay, ButtonPressMask|ButtonReleaseMask|PointerMotionMask|KeyPressMask);
     Cursor cur = XCreateFontCursor(z.dpy, XC_left_ptr);
     XDefineCursor(z.dpy, z.root, cur); XFreeCursor(z.dpy, cur);
@@ -124,20 +133,29 @@ int main(int argc, char **argv) {
     XFixesSetWindowShapeRegion(z.dpy, z.overlay, ShapeInput, 0, 0, empty);
     XFixesDestroyRegion(z.dpy, empty);
 
-    z.fmt32 = XRenderFindStandardFormat(z.dpy, PictStandardARGB32);
-    z.fmt24 = XRenderFindStandardFormat(z.dpy, PictStandardRGB24);
     XWindowAttributes oa;
-    XGetWindowAttributes(z.dpy, z.overlay, &oa);
+    if (!XGetWindowAttributes(z.dpy, z.overlay, &oa)) {
+        fputs("havel: cannot query overlay window\n", stderr);
+        cleanup(&z); XCloseDisplay(z.dpy); return 1;
+    }
     XRenderPictFormat *ofmt = XRenderFindVisualFormat(z.dpy, oa.visual);
+    if (!ofmt) {
+        fputs("havel: unsupported overlay visual\n", stderr);
+        cleanup(&z); XCloseDisplay(z.dpy); return 1;
+    }
     for (int i = 0; i < 2; i++) {
         z.backbuf[i] = XCreatePixmap(z.dpy, z.root, z.sw, z.sh, oa.depth);
         z.backbuf_pic[i] = XRenderCreatePicture(z.dpy, z.backbuf[i], ofmt, 0, NULL);
+        if (z.backbuf[i] == None || z.backbuf_pic[i] == None) {
+            fputs("havel: cannot allocate back buffers\n", stderr);
+            cleanup(&z); XCloseDisplay(z.dpy); return 1;
+        }
     }
     XPresentSelectInput(z.dpy, z.overlay, PresentIdleNotifyMask);
 
     setup_ewmh(&z);
 
-    Window dummy, *ch; unsigned int n;
+    Window dummy, *ch = NULL; unsigned int n = 0;
     XQueryTree(z.dpy, z.root, &dummy, &dummy, &ch, &n);
     for (unsigned i = 0; i < n; i++) {
         XWindowAttributes a;
@@ -153,8 +171,15 @@ int main(int argc, char **argv) {
         z.current_workspace = g_saved.current_workspace;
         for (int i = 0; i < MAX_WORKSPACES; i++) {
             z.workspaces[i] = g_saved.workspaces[i];
+            /* Screen dimensions are not part of the saved viewport. */
+            z.workspaces[i].sw = z.sw;
+            z.workspaces[i].sh = z.sh;
         }
         z.vp = z.workspaces[z.current_workspace];
+
+        long cur_desktop_restored = z.current_workspace;
+        XChangeProperty(z.dpy, z.root, net_cur_desktop, XA_CARDINAL, 32,
+                        PropModeReplace, (unsigned char *)&cur_desktop_restored, 1);
         
         for (int i = 0; i < z.nclients; i++) {
             Client *c = &z.clients[i];
@@ -168,17 +193,26 @@ int main(int argc, char **argv) {
             if (!found && !c->restored) { c->cx = z.vp.cx - c->cw / 2.0; c->cy = z.vp.cy - c->ch / 2.0; }
         }
         Client ordered[MAX_CLIENTS];
-        int n = 0;
-        for (int k = 0; k < g_saved.n; k++)
-            for (int i = 0; i < z.nclients; i++)
-                if (z.clients[i].window == g_saved.c[k].w) { ordered[n++] = z.clients[i]; break; }
-        for (int i = 0; i < z.nclients; i++) {
-            int seen = 0;
-            for (int k = 0; k < n && !seen; k++) seen = ordered[k].window == z.clients[i].window;
-            if (!seen) ordered[n++] = z.clients[i];
+        int nordered = 0;
+        for (int k = 0; k < g_saved.n && nordered < MAX_CLIENTS; k++) {
+            for (int i = 0; i < z.nclients; i++) {
+                if (z.clients[i].window != g_saved.c[k].w) continue;
+                int seen = 0;
+                for (int j = 0; j < nordered; j++)
+                    if (ordered[j].window == z.clients[i].window) { seen = 1; break; }
+                if (!seen) ordered[nordered++] = z.clients[i];
+                break;
+            }
         }
-        memcpy(z.clients, ordered, n * sizeof *ordered);
-        for (int i = 0; i < n; i++) XRaiseWindow(z.dpy, z.clients[i].window);
+        for (int i = 0; i < z.nclients && nordered < MAX_CLIENTS; i++) {
+            int seen = 0;
+            for (int k = 0; k < nordered; k++)
+                if (ordered[k].window == z.clients[i].window) { seen = 1; break; }
+            if (!seen) ordered[nordered++] = z.clients[i];
+        }
+        if (nordered == z.nclients)
+            memcpy(z.clients, ordered, nordered * sizeof *ordered);
+        for (int i = 0; i < nordered; i++) XRaiseWindow(z.dpy, z.clients[i].window);
         if (g_saved.focused && find(&z, g_saved.focused)) {
             z.focused = g_saved.focused;
             XSetInputFocus(z.dpy, z.focused, RevertToPointerRoot, CurrentTime);
@@ -197,7 +231,8 @@ int main(int argc, char **argv) {
             if (IDLE_LOCK_TIMEOUT > 0) {
                 double idle = now_secs() - z.last_input;
                 if (!z.idle_fired && idle >= IDLE_LOCK_TIMEOUT) {
-                    system(IDLE_LOCK_CMD);
+                    int lock_rc = system(IDLE_LOCK_CMD);
+                    (void)lock_rc;
                     z.idle_fired = 1;
                 }
                 if (!z.idle_fired) wait = IDLE_LOCK_TIMEOUT - idle;
@@ -230,9 +265,13 @@ int main(int argc, char **argv) {
                     ev.xclient.data.l[2] == (long)z.net_wm_fullscreen) {
                     Client *c = find(&z, ev.xclient.window);
                     if (c) {
-                        z.focused = c->window;
-                        XSetInputFocus(z.dpy, c->window, RevertToPointerRoot, CurrentTime);
-                        fullscreen_toggle(&z, NULL);
+                        long action = ev.xclient.data.l[0]; /* 0 remove, 1 add, 2 toggle */
+                        int want = action == 1 ? 1 : action == 0 ? 0 : !c->isfullscreen;
+                        if (want != c->isfullscreen) {
+                            z.focused = c->window;
+                            XSetInputFocus(z.dpy, c->window, RevertToPointerRoot, CurrentTime);
+                            fullscreen_toggle(&z, NULL);
+                        }
                     }
                 }
             }
@@ -240,15 +279,35 @@ int main(int argc, char **argv) {
         case UnmapNotify:      on_unmap(&z, &ev.xunmap);                break;
         case DestroyNotify:    on_destroy(&z, &ev.xdestroywindow);      break;
         case ConfigureRequest: on_configure(&z, &ev.xconfigurerequest); break;
+        case MappingNotify:
+            XRefreshKeyboardMapping(&ev.xmapping);
+            if (ev.xmapping.request == MappingKeyboard ||
+                ev.xmapping.request == MappingModifier) {
+                update_numlockmask(z.dpy);
+                XUngrabKey(z.dpy, AnyKey, AnyModifier, z.root);
+                for (int i = 0; i < NBINDINGS; i++) {
+                    const Key *k = &keys[i];
+                    grab_key(z.dpy, XKeysymToKeycode(z.dpy, k->keysym), k->mod, z.root);
+                }
+            }
+            break;
         case ButtonPress:      mark_activity(&z); on_button(&z, &ev.xbutton);   break;
         case ButtonRelease:    mark_activity(&z); on_release(&z, &ev.xbutton);  break;
         case MotionNotify:     mark_activity(&z); on_motion(&z, &ev.xmotion);   break;
         case KeyPress:         mark_activity(&z); on_key(&z, &ev.xkey); request_redraw(&z); break;
         case GenericEvent:
             if (ev.xcookie.extension == z.xi_opcode && XGetEventData(z.dpy, &ev.xcookie)) {
-                if (ev.xcookie.evtype == XI_RawMotion) { mark_activity(&z); on_hover(&z); }
-                else if (ev.xcookie.evtype == XI_RawKeyPress || ev.xcookie.evtype == XI_RawKeyRelease)
-                    { mark_activity(&z); sync_gesture_grab(&z); }
+                if (ev.xcookie.evtype == XI_RawMotion) {
+                    mark_activity(&z); on_hover(&z);
+                } else if (ev.xcookie.evtype == XI_RawKeyPress ||
+                           ev.xcookie.evtype == XI_RawKeyRelease) {
+                    mark_activity(&z); sync_gesture_grab(&z);
+                } else if (ev.xcookie.evtype == XI_RawButtonPress ||
+                           ev.xcookie.evtype == XI_RawButtonRelease) {
+                    /* Refresh the hover/drag target immediately, especially
+                     * after a drag ends outside the client's bounds. */
+                    mark_activity(&z); on_hover(&z);
+                }
                 XFreeEventData(z.dpy, &ev.xcookie);
             } else if (ev.xcookie.extension == z.present_opcode && XGetEventData(z.dpy, &ev.xcookie)) {
                 if (ev.xcookie.evtype == PresentIdleNotify)

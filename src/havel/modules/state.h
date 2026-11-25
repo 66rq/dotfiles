@@ -12,7 +12,9 @@ static double now_secs(void) {
 #define STATE_PROP    "_ZZWM_STATE"
 #define STATE_VERSION 2
 #define STATE_HDR     7
+#define STATE_WS      (MAX_WORKSPACES * 3)
 #define STATE_STRIDE  6
+#define STATE_MAX     (STATE_HDR + STATE_WS + MAX_CLIENTS * STATE_STRIDE)
 
 typedef struct {
     int    valid;
@@ -31,7 +33,7 @@ static volatile sig_atomic_t g_restart_req;
 static void on_sigusr1(int sig) { (void)sig; g_restart_req = 1; }
 
 static void save_state(Havel *z) {
-    long buf[STATE_HDR + MAX_CLIENTS * STATE_STRIDE];
+    long buf[STATE_MAX];
     int n = 0;
     buf[n++] = STATE_VERSION;
     buf[n++] = lround(z->vp.cx * 256.0);
@@ -63,12 +65,13 @@ static void load_state(Display *dpy, Window root, SavedState *s) {
     int fmt; unsigned long nitems, after; unsigned char *data = NULL;
     s->valid = 0;
     if (prop == None) return;
-    if (XGetWindowProperty(dpy, root, prop, 0, STATE_HDR + MAX_CLIENTS * STATE_STRIDE,
+    if (XGetWindowProperty(dpy, root, prop, 0, STATE_MAX,
                            False, XA_CARDINAL, &type, &fmt, &nitems, &after, &data)
             != Success)
         return;
     long *v = (long *)data;
-    if (data && fmt == 32 && nitems >= STATE_HDR && (int32_t)(uint32_t)v[0] == STATE_VERSION) {
+    if (data && fmt == 32 && nitems >= STATE_HDR + STATE_WS &&
+            (int32_t)(uint32_t)v[0] == STATE_VERSION) {
         s->cx      = (int32_t)(uint32_t)v[1] / 256.0;
         s->cy      = (int32_t)(uint32_t)v[2] / 256.0;
         s->zoom    = (int32_t)(uint32_t)v[3] / 65536.0;
@@ -76,13 +79,15 @@ static void load_state(Display *dpy, Window root, SavedState *s) {
         s->n       = (int32_t)(uint32_t)v[5];
         s->current_workspace = (int32_t)(uint32_t)v[6];
         if (s->current_workspace < 0 || s->current_workspace >= MAX_WORKSPACES) s->current_workspace = 0;
-        int offset = 7;
+        int offset = STATE_HDR;
         for (int i = 0; i < MAX_WORKSPACES; i++) {
+            double wz = (int32_t)(uint32_t)v[offset + i*3 + 2] / 65536.0;
+            if (wz < ZOOM_MIN || wz > ZOOM_MAX) wz = 1.0;
             s->workspaces[i].cx = (int32_t)(uint32_t)v[offset + i*3] / 256.0;
             s->workspaces[i].cy = (int32_t)(uint32_t)v[offset + i*3 + 1] / 256.0;
-            s->workspaces[i].zoom = (int32_t)(uint32_t)v[offset + i*3 + 2] / 65536.0;
+            s->workspaces[i].zoom = wz;
         }
-        offset += MAX_WORKSPACES * 3;
+        offset += STATE_WS;
         if (s->n < 0) s->n = 0;
         if (s->n > MAX_CLIENTS) s->n = MAX_CLIENTS;
         if ((unsigned long)(offset + s->n * STATE_STRIDE) > nitems) s->n = 0;
@@ -160,8 +165,9 @@ static void restart(Havel *z) {
     save_state(z);
     XUngrabPointer(z->dpy, CurrentTime);
     XUngrabKeyboard(z->dpy, CurrentTime);
-    XSync(z->dpy, False);
+    cleanup(z);
     XCloseDisplay(z->dpy);
+    z->dpy = NULL;
     execvp(g_argv[0], g_argv);
     char *fallback[] = { (char *)"havel", NULL };
     execvp(fallback[0], fallback);

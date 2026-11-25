@@ -26,9 +26,9 @@
 #define ZOOM_OUT_BUTTON        5
 
 /* Colors and Appearance. */
-static const char *background = "#1111111";
-static const char *bordercolor = "#262626";
-static const char *focuscolor = "#5e3227";
+static const char *background = "#73a1d2";
+static const char *bordercolor = "#28507B";
+static const char *focuscolor = "#73a1d2";
 static const unsigned int borderpx = 5;
 
 static const unsigned int focusfollowsmouse = 1;
@@ -51,7 +51,7 @@ static const Key keys[] = {
     { MODKEY,           XK_d,      spawn,                 { .v = dmenucmd } },
     { MODKEY,           XK_q,      kill_window,           { .i = 0 } },
     { MODKEY|ShiftMask, XK_r,      reload_havel,          { .i = 0 } },
-    { MODKEY|ShiftMask, XK_q,      spawn,                 { .v = quitcmd } },
+    { MODKEY|ShiftMask, XK_e,      spawn,                 { .v = quitcmd } },
 
     /* View and zoom */
     { MODKEY|ShiftMask, XK_d,      lookat_focused_window, { .i = 0 } },

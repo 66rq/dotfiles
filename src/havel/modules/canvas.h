@@ -61,8 +61,8 @@ static Window hit_override(Havel *z, int sx, int sy, XWindowAttributes *out) {
 static void to_client_local(Client *c, Viewport *v, int sx, int sy, int *wx, int *wy) {
     double cx, cy;
     to_canvas(v, sx, sy, &cx, &cy);
-    *wx = (int)(cx - c->cx);
-    *wy = (int)(cy - c->cy);
+    *wx = (int)floor(cx - c->cx);
+    *wy = (int)floor(cy - c->cy);
 }
 
 static void raise_client(Havel *z, Client *c) {
@@ -189,12 +189,17 @@ static void view_focused(Havel *z) {
     z->vp.cy = target_cy - (monitor_cy - z->vp.sh / 2.0) / z->vp.zoom;
 }
 
-static void composite_window(Havel *z, Window w, int depth, double zoom, int op,
+static void composite_window(Havel *z, Window w, Visual *visual, double zoom, int op,
                               Picture dst, int sx, int sy, int sw, int sh) {
+    XRenderPictFormat *fmt = visual ? XRenderFindVisualFormat(z->dpy, visual) : NULL;
+    if (!fmt) return;
     Pixmap pix = XCompositeNameWindowPixmap(z->dpy, w);
     if (!pix) return;
-    Picture src = XRenderCreatePicture(z->dpy, pix,
-        depth == 32 ? z->fmt32 : z->fmt24, 0, NULL);
+    Picture src = XRenderCreatePicture(z->dpy, pix, fmt, 0, NULL);
+    if (src == None) {
+        XFreePixmap(z->dpy, pix);
+        return;
+    }
     if (zoom > 0 && zoom != 1.0) {
         XFixed inv = XDoubleToFixed(1.0 / zoom);
         XTransform xf = {{{ inv, 0, 0 }, { 0, inv, 0 }, { 0, 0, XDoubleToFixed(1.0) }}};
@@ -301,8 +306,8 @@ static void composite_frame(Havel *z) {
         if (c->isfullscreen) {
             int sx, sy, sw, sh;
             srect(c, &z->vp, &sx, &sy, &sw, &sh);
-            composite_window(z, c->window, c->depth, z->vp.zoom, PictOpSrc, dst, sx, sy, sw, sh);
-            continue; 
+            composite_window(z, c->window, c->visual, z->vp.zoom, PictOpSrc, dst, sx, sy, sw, sh);
+            continue;
         }
 
         XRenderColor border_col =
@@ -333,7 +338,7 @@ static void composite_frame(Havel *z) {
             XRenderFillRectangles(z->dpy, PictOpSrc, dst,
                                   &border_col, &frame, 1);
         }
-        composite_window(z, c->window, c->depth, z->vp.zoom,
+        composite_window(z, c->window, c->visual, z->vp.zoom,
                          PictOpSrc, dst, sx, sy, sw, sh);
     }
 
@@ -346,7 +351,7 @@ static void composite_frame(Havel *z) {
         if (a.x >= z->sw || a.y >= z->sh ||
             a.x + a.width <= 0 || a.y + a.height <= 0)
             continue;
-        composite_window(z, w, a.depth, 0, PictOpOver, dst,
+        composite_window(z, w, a.visual, 0, PictOpOver, dst,
                          a.x, a.y, a.width, a.height);
     }
 }
@@ -377,6 +382,53 @@ static void on_present_idle(Havel *z, XPresentIdleNotifyEvent *e) {
     for (int i = 0; i < 2; i++)
         if (z->backbuf[i] == e->pixmap) z->buf_busy[i] = 0;
     pump_redraw(z);
+}
+
+/* Release every X resource owned by the window manager. Client windows are
+ * intentionally left mapped so the next instance can adopt them. */
+static void cleanup(Havel *z) {
+    if (!z || !z->dpy) return;
+
+    if (havel_wallpaper_picture != None) {
+        XRenderFreePicture(z->dpy, havel_wallpaper_picture);
+        havel_wallpaper_picture = None;
+    }
+    havel_wallpaper_pixmap = None;
+    havel_wallpaper_width = havel_wallpaper_height = 0;
+
+    for (int i = 0; i < 2; i++) {
+        if (z->backbuf_pic[i] != None) {
+            XRenderFreePicture(z->dpy, z->backbuf_pic[i]);
+            z->backbuf_pic[i] = None;
+        }
+        if (z->backbuf[i] != None) {
+            XFreePixmap(z->dpy, z->backbuf[i]);
+            z->backbuf[i] = None;
+        }
+    }
+
+    if (z->wm_check != None) {
+        Atom check = XInternAtom(z->dpy, "_NET_SUPPORTING_WM_CHECK", False);
+        Atom actual = None;
+        unsigned char *data = NULL;
+        int fmt = 0;
+        unsigned long nitems = 0, after = 0;
+        if (XGetWindowProperty(z->dpy, z->root, check, 0, 1, False, XA_WINDOW,
+                &actual, &fmt, &nitems, &after, &data) == Success
+                && data && actual == XA_WINDOW && fmt == 32 && nitems == 1
+                && *(Window *)data == z->wm_check)
+            XDeleteProperty(z->dpy, z->root, check);
+        if (data) XFree(data);
+        XDestroyWindow(z->dpy, z->wm_check);
+        z->wm_check = None;
+    }
+
+    if (z->overlay != None) {
+        XCompositeReleaseOverlayWindow(z->dpy, z->root);
+        z->overlay = None;
+    }
+
+    XSync(z->dpy, False);
 }
 
 static void on_button(Havel *z, XButtonEvent *ev) {
@@ -551,6 +603,9 @@ static void on_motion(Havel *z, XMotionEvent *ev) {
 }
 
 static void on_hover(Havel *z) {
+    /* Moving/resizing/panning position the shadow window themselves. */
+    if (z->moving || z->resizing || z->panning) return;
+
     Window root_ret, child_ret;
     int root_x, root_y, win_x, win_y;
     unsigned int mask;
@@ -558,9 +613,20 @@ static void on_hover(Havel *z) {
                         &root_x, &root_y, &win_x, &win_y, &mask))
         return;
 
+    int dragging = mask & (Button1Mask | Button2Mask | Button3Mask);
     XWindowAttributes a;
     Window ov = hit_override(z, root_x, root_y, &a);
-    Client *c = ov ? NULL : hit(z, root_x, root_y);
+
+    /* While a button is held (notably terminal text selection) keep routing
+     * pointer events to the window that received the press. Otherwise the
+     * shadow window would be parked as soon as the pointer crossed the
+     * window edge, which makes the client see a bogus jump in coordinates. */
+    Client *c;
+    if (dragging && z->hover_win)
+        c = find(z, z->hover_win);
+    else
+        c = ov ? NULL : hit(z, root_x, root_y);
+
     if (c && z->hover_win && c->window != z->hover_win) {
         Client *prev = find(z, z->hover_win);
         if (prev) park(z, prev);
@@ -574,9 +640,7 @@ static void on_hover(Havel *z) {
         return;
     }
 
-    if (focusfollowsmouse && !z->moving && !z->resizing && !z->panning
-            && !(mask & (Button1Mask | Button2Mask | Button3Mask))
-            && c->window != z->focused) {
+    if (focusfollowsmouse && !dragging && c->window != z->focused) {
         z->focused = c->window;
         XSetInputFocus(z->dpy, c->window, RevertToPointerRoot, CurrentTime);
         request_redraw(z);

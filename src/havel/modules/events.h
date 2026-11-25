@@ -6,7 +6,12 @@ static void on_map(Havel *z, XMapRequestEvent *ev) {
     if (!XGetWindowAttributes(z->dpy, ev->window, &a)) return;
     if (a.override_redirect) { XMapWindow(z->dpy, ev->window); return; }
     Client *c = find(z, ev->window);
-    if (!c && (c = manage(z, ev->window))) {
+    int is_new = 0;
+    if (!c) {
+        c = manage(z, ev->window);
+        is_new = c != NULL;
+    }
+    if (c && is_new && !c->restored) {
         int mx, my, mw, mh;
         double center_cx, center_cy;
 

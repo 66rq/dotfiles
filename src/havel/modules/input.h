@@ -135,7 +135,8 @@ static void jump_to_window(Havel *z, const Arg *arg) {
 
 static void zoom_in(Havel *z, const Arg *arg) {
     (void)arg;
-    int rx, ry; Window r, ch; int wx, wy; unsigned int mask;
+    int rx = z->sw / 2, ry = z->sh / 2;
+    Window r, ch; int wx, wy; unsigned int mask;
     XQueryPointer(z->dpy, z->root, &r, &ch, &rx, &ry, &wx, &wy, &mask);
     zoom_at(&z->vp, rx, ry, ZOOM_SPEED);
     save_viewport(z);
@@ -144,7 +145,8 @@ static void zoom_in(Havel *z, const Arg *arg) {
 
 static void zoom_out(Havel *z, const Arg *arg) {
     (void)arg;
-    int rx, ry; Window r, ch; int wx, wy; unsigned int mask;
+    int rx = z->sw / 2, ry = z->sh / 2;
+    Window r, ch; int wx, wy; unsigned int mask;
     XQueryPointer(z->dpy, z->root, &r, &ch, &rx, &ry, &wx, &wy, &mask);
     zoom_at(&z->vp, rx, ry, 1.0 / ZOOM_SPEED);
     save_viewport(z);
@@ -154,7 +156,13 @@ static void zoom_out(Havel *z, const Arg *arg) {
 static void switch_workspace(Havel *z, const Arg *arg) {
     int target = arg->i - 1;
     if (target < 0 || target >= MAX_WORKSPACES || target == z->current_workspace) return;
-    
+
+    if (z->hover_win) {
+        Client *h = find(z, z->hover_win);
+        if (h) park(z, h);
+        z->hover_win = 0;
+    }
+
     z->workspaces[z->current_workspace] = z->vp;
     z->current_workspace = target;
     z->vp = z->workspaces[z->current_workspace];
@@ -166,8 +174,9 @@ static void switch_workspace(Havel *z, const Arg *arg) {
             break;
         }
     }
-    if (z->focused) XSetInputFocus(z->dpy, z->focused, RevertToPointerRoot, CurrentTime);
-    
+    XSetInputFocus(z->dpy, z->focused ? z->focused : z->root,
+                   RevertToPointerRoot, CurrentTime);
+
     save_viewport(z);
     request_redraw(z);
     
@@ -181,7 +190,11 @@ static void move_to_workspace(Havel *z, const Arg *arg) {
     if (target < 0 || target >= MAX_WORKSPACES) return;
     Client *c = find(z, z->focused);
     if (!c || c->workspace == target) return;
-    
+
+    if (z->hover_win == c->window) {
+        park(z, c);
+        z->hover_win = 0;
+    }
     c->workspace = target;
     
     long data = target;
@@ -195,7 +208,8 @@ static void move_to_workspace(Havel *z, const Arg *arg) {
             break;
         }
     }
-    if (z->focused) XSetInputFocus(z->dpy, z->focused, RevertToPointerRoot, CurrentTime);
-    
+    XSetInputFocus(z->dpy, z->focused ? z->focused : z->root,
+                   RevertToPointerRoot, CurrentTime);
+
     request_redraw(z);
 }
