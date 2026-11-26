@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=Havel
-Comment=Havel window manager
-Exec=/usr/local/bin/havel
-TryExec=/usr/local/bin/havel
-Type=Application
-DesktopNames=Havel

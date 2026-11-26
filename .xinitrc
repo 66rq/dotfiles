@@ -11,12 +11,12 @@ setxkbmap -layout "us,ara" -option "grp:alt_shift_toggle"
 xset r rate 250 40
 xmodmap "$HOME/.Xmodmap"
 xrdb -merge "$HOME/.Xresources"
+#sxhkd &
 xclip &
 xrandr --output LVDS --mode 1600x900 --output VGA-0 --mode 1680x1050 --primary --left-of LVDS
 xwallpaper --zoom "$(find $HOME/.cache/temp-wal -name 'temp-wal*' -type f | head -n 1)" &
 
 pipewire &
-sxbar &
-exec dbus-run-session sxwm
-# exec dbus-run-session dwm
-# exec dbus-run-session havel
+#sxbar &
+status &
+exec dbus-run-session havel
